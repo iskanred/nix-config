@@ -1,9 +1,10 @@
-{ config, pkgs, ... }:
+{ config, local, pkgs, ... }:
 
 let
   # Use path-based flakes so local.nix can stay gitignored and untracked.
-  hmFlakeRef = "path:${config.home.homeDirectory}/.config/home-manager#${config.home.username}";
-  kittyPrimaryMod = if pkgs.stdenv.hostPlatform.isDarwin then "cmd" else "ctrl";
+  flakeRef = "path:${local.configDirectory}";
+  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+  kittyPrimaryMod = if isDarwin then "cmd" else "ctrl";
 in
 {
   programs.zsh = {
@@ -60,9 +61,12 @@ in
 
       cat = "bat";
       top = "htop";
-
-      # Fast user-only activation; use darwin-rebuild for macOS system changes.
-      hm  = "home-manager --flake '${hmFlakeRef}'";
+    }
+    // pkgs.lib.optionalAttrs isDarwin {
+      "darwin-switch" = "sudo darwin-rebuild switch --flake '${flakeRef}#current'";
+    }
+    // pkgs.lib.optionalAttrs (!isDarwin) {
+      hm = "home-manager --flake '${flakeRef}#${config.home.username}'";
     };
 
     initContent = ''

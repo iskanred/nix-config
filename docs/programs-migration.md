@@ -23,13 +23,14 @@ Migration progress is tracked in this same file below (`Program Replacements`) u
 5. Remove duplicates and obsolete manual config only when safe.
 6. Mark the item as `(replaced)` in `Program Replacements`.
 7. Always validate before reporting:
-   - `XDG_CACHE_HOME=/tmp home-manager --flake path:.#$USER switch && exec zsh -lc 'exit'`
+   - macOS: build the Darwin output, then use `darwin-switch` when activation is required.
+   - non-NixOS Linux: run `hm switch`.
 
 ## Reporting Format After Each Step
 - What was found (duplicates/manual config)
 - What changed (files and key options)
 - Why these choices were made
-- Validation result of `hm switch && exec zsh`
+- Validation result for the applicable platform command and shell startup
 
 ## Program Replacements
 eza -> programs.eza (replaced)

@@ -2,4 +2,7 @@
   username = "user";
   homeDirectory = "/Users/user"; # Use /home/user on Linux.
   system = "aarch64-darwin"; # Or x86_64-linux, aarch64-linux, x86_64-darwin.
+
+  # Defaults to "${homeDirectory}/.config/nix-config" when omitted.
+  # configDirectory = "/path/to/nix-config";
 }

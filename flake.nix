@@ -26,9 +26,18 @@
     let
       hasLocal = builtins.pathExists ./local.nix;
 
-      local =
+      rawLocal =
         if hasLocal
         then import ./local.nix
+        else null;
+
+      local =
+        if hasLocal
+        then rawLocal // {
+          configDirectory =
+            rawLocal.configDirectory
+            or "${rawLocal.homeDirectory}/.config/nix-config";
+        }
         else null;
 
       isDarwin = hasLocal && nixpkgs.lib.hasSuffix "-darwin" local.system;

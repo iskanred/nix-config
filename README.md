@@ -31,24 +31,30 @@ Then set the account and platform:
 `local.nix` is intentionally gitignored. Commands use a `path:` flake reference
 so the untracked file is included during evaluation.
 
+The checkout defaults to `~/.config/nix-config`. Set `configDirectory` in
+`local.nix` only when using another location.
+
 ## Apply the configuration
 
 On macOS, apply the complete nix-darwin system and the integrated Home Manager
 configuration:
 
 ```bash
-sudo darwin-rebuild switch --flake "path:$HOME/.config/home-manager#current"
+sudo darwin-rebuild switch --flake "path:$HOME/.config/nix-config#current"
 ```
 
-On macOS or Linux, apply only the standalone Home Manager configuration:
+After the first activation, `darwin-switch` runs this command. The standalone
+`hm` alias is intentionally not defined on macOS.
+
+On non-NixOS Linux, apply the standalone Home Manager configuration:
 
 ```bash
-home-manager switch --flake "path:$HOME/.config/home-manager#$USER"
+home-manager switch --flake "path:$HOME/.config/nix-config#$USER"
 ```
 
-After the first Home Manager activation, `hm switch` is a shortcut for the
-standalone command. Use `darwin-rebuild` when changes under `modules/darwin/`
-must also be applied.
+On non-NixOS Linux, `hm switch` is a shortcut for the standalone command. A
+future NixOS host should use `nixos-rebuild` when Home Manager is integrated
+into its system configuration.
 
 ## Flake outputs
 

@@ -87,6 +87,6 @@ Current themes:
 - `one-light`
 
 To add a new theme:
-1. Add a plugin (if needed) in `$HOME/.config/home-manager/modules/home/programs.nix`.
+1. Add a plugin (if needed) in `$HOME/.config/nix-config/modules/home/programs.nix`.
 2. Create `lua/themes/<name>.lua` with a `load()` function.
 3. Set `NVIM_THEME=<name>` (or use the theme helper in Zsh).

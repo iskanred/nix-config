@@ -65,6 +65,11 @@ must also be applied.
 - `modules/darwin/` — macOS system configuration
 - `files/` — managed dotfiles
 
+## Documentation
+
+- [Program migration playbook](docs/programs-migration.md)
+- [Neovim configuration](docs/neovim.md)
+
 ## Storage cleanup
 
 ```bash

@@ -18,9 +18,6 @@ let
 
 
   commonPackages = with pkgs; [
-    # Sanity check
-    hello
-
     # GNU userland (Linux-like)
     coreutils
     findutils

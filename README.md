@@ -1,88 +1,81 @@
-# 🏠 Home Manager Configuration
+# Cross-Platform Nix Configuration
 
-Minimal Home Manager setup for macOS and Linux.
+One flake for:
 
-## ✨ Highlights
-- 🔧 Modular layout (`modules/home/*`)
-- 🧩 Works on macOS (Darwin) and Linux
-- 🗂️ Local machine settings kept out of Git via `local.nix`
+- macOS system settings through nix-darwin
+- a shared Home Manager environment on macOS and Linux
+- standalone Home Manager activation when a system rebuild is not needed
 
-## 🧰 Install Nix + Home Manager
-Follow the official guides:
-- Nix: [nixos.org/download.html](https://nixos.org/download.html)
-- Home Manager: [nix-community.github.io/home-manager](https://nix-community.github.io/home-manager/)
+The Home Manager modules select platform-specific packages and settings from
+`pkgs.stdenv.hostPlatform`, while the Darwin system configuration remains in
+`modules/darwin/`.
 
-Enable [flakes](https://nixos.wiki/wiki/Flakes) in `/etc/nix/nix.conf`:
-```ini
-experimental-features = nix-command flakes
-```
+## Local configuration
 
-## 🚀 Quick Start
-1. Create your local settings:
+Create the private machine configuration:
+
 ```bash
 cp local.nix.example local.nix
 ```
 
-2. Edit `local.nix`:
+Then set the account and platform:
+
 ```nix
 {
-  username = "your-username"; # usually: `echo $USER`
-  homeDirectory = "/Users/your-username"; # or /home/your-username on Linux; usually: `echo $HOME`
-  system = "aarch64-darwin"; # or x86_64-linux, aarch64-linux, x86_64-darwin
+  username = "your-username";
+  homeDirectory = "/Users/your-username"; # Use /home/... on Linux.
+  system = "aarch64-darwin"; # Or x86_64-darwin, x86_64-linux, aarch64-linux.
 }
 ```
 
-3. Verify flakes work:
+`local.nix` is intentionally gitignored. Commands use a `path:` flake reference
+so the untracked file is included during evaluation.
+
+## Apply the configuration
+
+On macOS, apply the complete nix-darwin system and the integrated Home Manager
+configuration:
+
 ```bash
-nix flake show
+sudo darwin-rebuild switch --flake "path:$HOME/.config/home-manager#current"
 ```
 
-4. Apply:
+On macOS or Linux, apply only the standalone Home Manager configuration:
+
 ```bash
-home-manager --flake "path:$HOME/.config/home-manager#$USER" switch
+home-manager switch --flake "path:$HOME/.config/home-manager#$USER"
 ```
 
-## 🧩 System Values
-Set `system` in `local.nix`:
-- `x86_64-linux` (most PCs/laptops)
-- `aarch64-linux` (ARM Linux)
-- `x86_64-darwin` (Intel macOS)
-- `aarch64-darwin` (Apple Silicon macOS)
+After the first Home Manager activation, `hm switch` is a shortcut for the
+standalone command. Use `darwin-rebuild` when changes under `modules/darwin/`
+must also be applied.
 
-Full list:
-[Nixpkgs platforms](https://nixos.org/manual/nixpkgs/stable/#chap-platforms)
+## Flake outputs
 
-## 🗂️ Layout
-- `home.nix` — entry point
-- `modules/home/base.nix` — base settings, XDG, session vars
-- `modules/home/packages.nix` — packages + per-platform lists
-- `modules/home/files.nix` — managed dotfiles
-- `modules/home/programs.nix` — program configs & aliases
+- `homeModules.default` — reusable cross-platform Home Manager module
+- `homeConfigurations.<username>` — standalone Home Manager configuration
+- `darwinConfigurations.current` — macOS system plus integrated Home Manager
+  configuration; exported only when `local.system` ends in `-darwin`
 
-## 🧹 Storage Cleanup
-- `hm generations` — list saved Home Manager generations.
-- `hm expire-generations "-30 days"` — remove old generations (keeps recent).
-- `nix-collect-garbage -d` — delete unused store paths.
-- `nix-store --optimise` — hardlink store paths to save space.
+## Layout
 
-## 🎨 Themes (quick reference)
-Theme selection is configured here:
-- Kitty theme is set by `programs.kitty.themeFile` in `modules/home/programs.nix` (uses themes from `kitty-themes`, e.g. `OneDark`).
-- `NVIM_THEME` controls Neovim themes; loader is in `files/nvim/lua/config/theme.lua`; theme modules live in `files/nvim/lua/themes/<name>.lua`.
-- `BAT_THEME` controls bat themes; list available themes with `bat --list-themes`.
+- `flake.nix` — inputs and standalone/Darwin outputs
+- `home.nix` — shared Home Manager entry point
+- `modules/home/` — shared and platform-conditional user configuration
+- `modules/darwin/` — macOS system configuration
+- `files/` — managed dotfiles
 
-Change theme by updating the relevant setting, then run:
+## Storage cleanup
+
 ```bash
-hm switch
+hm generations
+hm expire-generations "-30 days"
+nix-collect-garbage -d
+nix-store --optimise
 ```
 
-## ⚠️ Notes
-- `local.nix` is intentionally gitignored and must not be committed.
-- If you clone this repo elsewhere, recreate `local.nix` from the example.
-- After the first successful switch, `hm` is available as a shortcut for:
-  `home-manager --flake "path:$HOME/.config/home-manager#$USER"`.
-- The `hm` alias also avoids the `flake/local.nix` visibility issue related to `git` by always using `path:`.
-- If `hm` isn't available yet, run the full command once:
-  ```bash
-  home-manager --flake "path:$HOME/.config/home-manager#$USER" switch
-  ```
+## Theme settings
+
+- Kitty: `programs.kitty.themeFile` in `modules/home/programs.nix`
+- Neovim: `NVIM_THEME` in `modules/home/base.nix`
+- bat: `BAT_THEME` in `modules/home/base.nix`

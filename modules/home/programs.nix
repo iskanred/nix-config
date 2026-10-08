@@ -61,7 +61,7 @@ in
       cat = "bat";
       top = "htop";
 
-      # TODO: Remove the standalone Home Manager alias once macOS fully uses nix-darwin-managed Home Manager.
+      # Fast user-only activation; use darwin-rebuild for macOS system changes.
       hm  = "home-manager --flake '${hmFlakeRef}'";
     };
 
@@ -146,6 +146,11 @@ in
     vimAlias = true;
     viAlias = true;
     defaultEditor = true;
+
+    # Preserve the pre-26.05 defaults across Home Manager upgrades.
+    withRuby = true;
+    withPython3 = true;
+
     plugins = with pkgs.vimPlugins; [
       onedark-nvim
       nvim-cmp

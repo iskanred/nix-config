@@ -43,8 +43,9 @@ configuration:
 sudo darwin-rebuild switch --flake "path:$HOME/.config/nix-config#current"
 ```
 
-After the first activation, `darwin-switch` runs this command. The standalone
-`hm` alias is intentionally not defined on macOS.
+After the first activation, use `dr switch` to run the complete rebuild or
+`dr build` to build it without switching. The standalone `hm` alias is
+intentionally not defined on macOS.
 
 On non-NixOS Linux, apply the standalone Home Manager configuration:
 

@@ -63,7 +63,7 @@ in
       top = "htop";
     }
     // pkgs.lib.optionalAttrs isDarwin {
-      "darwin-switch" = "sudo darwin-rebuild switch --flake '${flakeRef}#current'";
+      dr = "sudo darwin-rebuild --flake '${flakeRef}#current'";
     }
     // pkgs.lib.optionalAttrs (!isDarwin) {
       hm = "home-manager --flake '${flakeRef}#${config.home.username}'";

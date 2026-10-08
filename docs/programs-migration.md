@@ -23,7 +23,7 @@ Migration progress is tracked in this same file below (`Program Replacements`) u
 5. Remove duplicates and obsolete manual config only when safe.
 6. Mark the item as `(replaced)` in `Program Replacements`.
 7. Always validate before reporting:
-   - macOS: build the Darwin output, then use `darwin-switch` when activation is required.
+   - macOS: run `dr build`, then use `dr switch` when activation is required.
    - non-NixOS Linux: run `hm switch`.
 
 ## Reporting Format After Each Step

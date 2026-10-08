@@ -14,7 +14,7 @@ Concise guidelines for automated changes in this repository.
 - Flake commands should use `path:` so untracked `local.nix` is visible:
   - macOS: `darwin-rebuild build --flake "path:$HOME/.config/nix-config#current"`
   - non-NixOS Linux: `home-manager --flake "path:$HOME/.config/nix-config#$USER" switch`
-- Use `darwin-switch` on macOS and `hm switch` on non-NixOS Linux.
+- Use `dr build` or `dr switch` on macOS and `hm switch` on non-NixOS Linux.
 
 ## Editing rules
 - Keep changes minimal and focused.
@@ -22,7 +22,7 @@ Concise guidelines for automated changes in this repository.
 - Update `modules/home/files.nix` when adding files under `files/`.
 
 ## Validation
-- On macOS, build the full Darwin output and activate it with `darwin-switch`
+- On macOS, build the full Darwin output and activate it with `dr switch`
   when system authorization is available.
 - On non-NixOS Linux, run `hm switch`.
 - If shell configs change, ensure shell startup is clean.

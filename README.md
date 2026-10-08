@@ -47,6 +47,26 @@ After the first activation, use `dr switch` to run the complete rebuild or
 `dr build` to build it without switching. The standalone `hm` alias is
 intentionally not defined on macOS.
 
+On macOS, Homebrew itself is managed by nix-homebrew. To install GUI
+applications declaratively, add their cask names to `homebrew.casks` in
+`modules/darwin/homebrew.nix`, build with `dr build`, and activate with
+`dr switch`. Command-line tools remain managed by Nix.
+
+The user-level `brew` command is intentionally shadowed by an error wrapper.
+Homebrew changes should go through the Nix module. During activation, Homebrew
+packages not present in the generated Brewfile are uninstalled; application
+data is preserved until the cleanup policy is deliberately changed to `zap`.
+
+Normal builds and switches do not update Homebrew applications. Run the
+explicit update workflow when desired:
+
+```bash
+dr update
+```
+
+This updates the flake inputs, builds the dedicated update configuration, and
+switches to it with Homebrew metadata refresh and package upgrades enabled.
+
 On non-NixOS Linux, apply the standalone Home Manager configuration:
 
 ```bash
@@ -69,7 +89,7 @@ into its system configuration.
 - `flake.nix` — inputs and standalone/Darwin outputs
 - `home.nix` — shared Home Manager entry point
 - `modules/home/` — shared and platform-conditional user configuration
-- `modules/darwin/` — macOS system configuration
+- `modules/darwin/` — macOS system settings and Homebrew casks
 - `files/` — managed dotfiles
 
 ## Documentation

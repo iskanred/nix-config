@@ -1,6 +1,10 @@
 { local, ... }:
 
 {
+  imports = [
+    ./homebrew.nix
+  ];
+
   nixpkgs.hostPlatform = local.system;
 
   system.primaryUser = local.username;

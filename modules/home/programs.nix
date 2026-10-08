@@ -62,14 +62,15 @@ in
       cat = "bat";
       top = "htop";
     }
-    // pkgs.lib.optionalAttrs isDarwin {
-      dr = "sudo darwin-rebuild --flake '${flakeRef}#current'";
-    }
     // pkgs.lib.optionalAttrs (!isDarwin) {
       hm = "home-manager --flake '${flakeRef}#${config.home.username}'";
     };
 
     initContent = ''
+      ${pkgs.lib.optionalString isDarwin ''
+        source "$HOME/.config/zsh/darwin-rebuild.zsh" '${flakeRef}'
+      ''}
+
       source "$HOME/.config/zsh/init.zsh"
     '';
   };

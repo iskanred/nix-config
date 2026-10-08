@@ -13,6 +13,8 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
   };
 
   outputs =
@@ -21,6 +23,7 @@
       nixpkgs,
       nix-darwin,
       home-manager,
+      nix-homebrew,
       ...
     }:
     let
@@ -55,30 +58,33 @@
           };
         };
 
-      mkDarwin = nix-darwin.lib.darwinSystem {
-        specialArgs = {
-          inherit local;
+      mkDarwin = { upgradeHomebrew ? false }:
+        nix-darwin.lib.darwinSystem {
+          specialArgs = {
+            inherit local upgradeHomebrew;
+          };
+
+          modules = [
+            ./modules/darwin
+
+            nix-homebrew.darwinModules.nix-homebrew
+
+            home-manager.darwinModules.home-manager
+
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+
+              home-manager.extraSpecialArgs = {
+                inherit local;
+              };
+
+              home-manager.users.${local.username}.imports = [
+                self.homeModules.default
+              ];
+            }
+          ];
         };
-
-        modules = [
-          ./modules/darwin
-
-          home-manager.darwinModules.home-manager
-
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-
-            home-manager.extraSpecialArgs = {
-              inherit local;
-            };
-
-            home-manager.users.${local.username}.imports = [
-              self.homeModules.default
-            ];
-          }
-        ];
-      };
     in
     {
       # Reusable on standalone Home Manager, nix-darwin, and NixOS.
@@ -90,6 +96,11 @@
     }
     // nixpkgs.lib.optionalAttrs isDarwin {
       # Full macOS system configuration with Home Manager integrated.
-      darwinConfigurations.current = mkDarwin;
+      darwinConfigurations.current = mkDarwin { };
+
+      # Explicit update target used by `dr update`.
+      darwinConfigurations.update = mkDarwin {
+        upgradeHomebrew = true;
+      };
     };
 }

@@ -16,6 +16,11 @@ let
     };
   });
 
+  brewGuard = pkgs.writeShellScriptBin "brew" ''
+    echo "brew is managed declaratively by Nix." >&2
+    echo "Add casks to modules/darwin/homebrew.nix, then run 'dr switch' or 'dr update'." >&2
+    exit 1
+  '';
 
   commonPackages = with pkgs; [
     # GNU userland (Linux-like)
@@ -82,6 +87,7 @@ let
   ];
 
   darwinPackages = with pkgs; [
+    brewGuard
     iproute2mac
     ubridgeDarwin
   ];

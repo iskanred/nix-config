@@ -1,11 +1,16 @@
-{ local, ... }:
+{ allowUnfreePredicate, local, ... }:
 
 {
   imports = [
     ./homebrew.nix
   ];
 
-  nixpkgs.hostPlatform = local.system;
+  nixpkgs = {
+    hostPlatform = local.system;
+    config = {
+      inherit allowUnfreePredicate;
+    };
+  };
 
   system.primaryUser = local.username;
 

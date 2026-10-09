@@ -45,9 +45,22 @@
 
       isDarwin = hasLocal && nixpkgs.lib.hasSuffix "-darwin" local.system;
 
+      allowUnfreePredicate = pkg:
+        builtins.elem (nixpkgs.lib.getName pkg) [
+          "obsidian"
+        ];
+
+      pkgsFor = system:
+        import nixpkgs {
+          inherit system;
+          config = {
+            inherit allowUnfreePredicate;
+          };
+        };
+
       mkHome = system:
         home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = pkgsFor system;
 
           modules = [
             self.homeModules.default
@@ -61,7 +74,7 @@
       mkDarwin = { upgradeHomebrew ? false }:
         nix-darwin.lib.darwinSystem {
           specialArgs = {
-            inherit local upgradeHomebrew;
+            inherit local upgradeHomebrew allowUnfreePredicate;
           };
 
           modules = [

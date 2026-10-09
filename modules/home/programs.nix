@@ -146,6 +146,11 @@ in
     };
   };
 
+  programs.obsidian = {
+    enable = pkgs.lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.obsidian;
+    cli.enable = true;
+  };
+
   programs.neovim = {
     enable = true;
     vimAlias = true;

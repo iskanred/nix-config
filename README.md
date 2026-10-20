@@ -80,6 +80,9 @@ into its system configuration.
 ## Flake outputs
 
 - `homeModules.default` — reusable cross-platform Home Manager module
+- `lib.mkHome` / `lib.mkDarwin` — builders that extend the baseline with supplied
+  machine identity, additional modules and permitted unfree package names
+- `templates.work` — starter for a separate private work repository
 - `homeConfigurations.<username>` — standalone Home Manager configuration
 - `darwinConfigurations.current` — macOS system plus integrated Home Manager
   configuration; exported only when `local.system` ends in `-darwin`
@@ -94,6 +97,7 @@ into its system configuration.
 
 ## Documentation
 
+- [Private work configuration](docs/private-work-config.md)
 - [Program migration playbook](docs/programs-migration.md)
 - [Neovim configuration](docs/neovim.md)
 

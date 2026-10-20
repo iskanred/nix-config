@@ -1,0 +1,10 @@
+result
+.DS_Store
+*.swp
+*.swo
+*.tmp
+local.nix
+secrets/
+*.key
+*.pem
+.env

@@ -29,52 +29,51 @@
     let
       hasLocal = builtins.pathExists ./local.nix;
 
-      rawLocal =
-        if hasLocal
-        then import ./local.nix
-        else null;
-
-      local =
-        if hasLocal
-        then rawLocal // {
+      normalizeLocal = machine:
+        machine // {
           configDirectory =
-            rawLocal.configDirectory
-            or "${rawLocal.homeDirectory}/.config/nix-config";
-        }
-        else null;
+            machine.configDirectory
+            or "${machine.homeDirectory}/.config/nix-config";
+        };
+
+      local = if hasLocal then normalizeLocal (import ./local.nix) else null;
 
       isDarwin = hasLocal && nixpkgs.lib.hasSuffix "-darwin" local.system;
 
-      allowUnfreePredicate = pkg:
-        builtins.elem (nixpkgs.lib.getName pkg) [
+      mkAllowUnfreePredicate = extraUnfreePackages: pkg:
+        builtins.elem (nixpkgs.lib.getName pkg) ([
           "obsidian"
-        ];
+        ] ++ extraUnfreePackages);
 
-      pkgsFor = system:
-        import nixpkgs {
-          inherit system;
-          config = {
-            inherit allowUnfreePredicate;
-          };
-        };
-
-      mkHome = system:
+      mkHome = { local, homeModules ? [ ], extraUnfreePackages ? [ ] }:
         home-manager.lib.homeManagerConfiguration {
-          pkgs = pkgsFor system;
+          pkgs = import nixpkgs {
+            inherit (local) system;
+            config.allowUnfreePredicate = mkAllowUnfreePredicate extraUnfreePackages;
+          };
 
           modules = [
             self.homeModules.default
-          ];
+          ] ++ homeModules;
 
           extraSpecialArgs = {
-            inherit local;
+            local = normalizeLocal local;
           };
         };
 
-      mkDarwin = { upgradeHomebrew ? false }:
+      mkDarwin =
+        {
+          local,
+          homeModules ? [ ],
+          darwinModules ? [ ],
+          extraUnfreePackages ? [ ],
+          upgradeHomebrew ? false,
+        }:
         nix-darwin.lib.darwinSystem {
           specialArgs = {
-            inherit local upgradeHomebrew allowUnfreePredicate;
+            local = normalizeLocal local;
+            inherit upgradeHomebrew;
+            allowUnfreePredicate = mkAllowUnfreePredicate extraUnfreePackages;
           };
 
           modules = [
@@ -89,30 +88,42 @@
               home-manager.useUserPackages = true;
 
               home-manager.extraSpecialArgs = {
-                inherit local;
+                local = normalizeLocal local;
               };
 
               home-manager.users.${local.username}.imports = [
                 self.homeModules.default
-              ];
+              ] ++ homeModules;
             }
-          ];
+          ] ++ darwinModules;
         };
     in
     {
       # Reusable on standalone Home Manager, nix-darwin, and NixOS.
       homeModules.default = ./home.nix;
+
+      # Consumers supply machine identity; these builders retain our baseline
+      # and pinned dependency graph without reading the consumer's local.nix.
+      lib = {
+        inherit mkHome mkDarwin;
+      };
+
+      templates.work = {
+        path = ./templates/work;
+        description = "Private work configuration extending the public baseline";
+      };
     }
     // nixpkgs.lib.optionalAttrs hasLocal {
       # Keep a standalone output available on both macOS and Linux.
-      homeConfigurations.${local.username} = mkHome local.system;
+      homeConfigurations.${local.username} = mkHome { inherit local; };
     }
     // nixpkgs.lib.optionalAttrs isDarwin {
       # Full macOS system configuration with Home Manager integrated.
-      darwinConfigurations.current = mkDarwin { };
+      darwinConfigurations.current = mkDarwin { inherit local; };
 
       # Explicit update target used by `dr update`.
       darwinConfigurations.update = mkDarwin {
+        inherit local;
         upgradeHomebrew = true;
       };
     };

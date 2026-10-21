@@ -1,6 +1,18 @@
-{ config, ... }:
+{ config, lib, ... }:
 
 {
+  home.file."personal-git-config" = {
+    target = lib.mkOverride 900 ".gitconfig";
+
+    text = ''
+      [user]
+        name = Iskander Nafikov
+        email = nafikov.iskander@mail.ru
+      [init]
+        defaultBranch = main
+    '';
+  };
+
   xdg.configFile."zsh/init.zsh".source = ../../files/zsh/init.zsh;
   xdg.configFile."zsh/environment.zsh".source = ../../files/zsh/environment.zsh;
   xdg.configFile."zsh/functions.zsh".source = ../../files/zsh/functions.zsh;

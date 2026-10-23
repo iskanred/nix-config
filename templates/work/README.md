@@ -62,8 +62,21 @@ nix flake update baseline --flake "path:$PWD"
 
 Build, review and commit the lock change, then switch. The baseline owns
 Nixpkgs, Home Manager, nix-darwin and nix-homebrew; do not add duplicate inputs.
-`dr update` retains its existing behavior: update inputs, build, then activate
-with Homebrew upgrades enabled. Use the separate steps above for review first.
+`dr update` updates inputs, runs any `nixConfig.update.steps`, builds, then
+activates with Homebrew upgrades enabled. Use the separate steps above for review
+first. There are no custom steps in this starter.
+
+Private modules can add ordered update steps with `lib.hm.dag.entryAfter`,
+writing snapshots under `$UPDATE_DIR/files/`. After all steps succeed, the
+baseline runner copies them to this checkout's `files/` before building.
+`$CONFIG_DIR` is this checkout's path. Use `update_header FILE 'Your CLI'` for
+comment-capable files; put notices for JSON in a sibling README instead.
+See the public baseline's `docs/private-work-config.md` for the complete interface.
+
+Commit credential-free snapshots so first activation needs no generator.
+`dr build` and `dr switch` only use those snapshots. Remove any old activation
+hooks that regenerate the same files. After changing update steps, switch once
+and open a new shell before using `dr update`.
 
 For another work machine, reuse these modules with that machine's ignored
 `local.nix`. Keep hardware- or host-specific modules separate if needed.

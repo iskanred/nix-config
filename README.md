@@ -64,8 +64,12 @@ explicit update workflow when desired:
 dr update
 ```
 
-This updates the flake inputs, builds the dedicated update configuration, and
-switches to it with Homebrew metadata refresh and package upgrades enabled.
+This updates the flake inputs, runs any custom `nixConfig.update.steps`, builds
+the dedicated update configuration, and switches to it with Homebrew metadata
+refresh and package upgrades enabled. No custom steps run by default.
+Private modules can use these steps to refresh committed configuration snapshots;
+see [custom update steps](docs/private-work-config.md#custom-update-steps).
+`dr build` and `dr switch` never run these generators.
 
 On non-NixOS Linux, apply the standalone Home Manager configuration:
 

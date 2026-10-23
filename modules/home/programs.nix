@@ -3,6 +3,11 @@
 let
   # Use path-based flakes so local.nix can stay gitignored and untracked.
   flakeRef = "path:${local.configDirectory}";
+  updateRunner = config.nixConfig.update.runner;
+  drArguments = pkgs.lib.escapeShellArgs (
+    [ flakeRef ]
+    ++ pkgs.lib.optional (updateRunner != null) "${updateRunner}/bin/nix-config-update"
+  );
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
   kittyPrimaryMod = if isDarwin then "cmd" else "ctrl";
 in
@@ -68,7 +73,7 @@ in
 
     initContent = ''
       ${pkgs.lib.optionalString isDarwin ''
-        source "$HOME/.config/zsh/darwin-rebuild.zsh" '${flakeRef}'
+        source "$HOME/.config/zsh/darwin-rebuild.zsh" ${drArguments}
       ''}
 
       source "$HOME/.config/zsh/init.zsh"

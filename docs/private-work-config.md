@@ -80,6 +80,85 @@ revision and transitive dependencies. Update that pin to adopt public changes;
 the work system stays on the previous revision until rebuilt and activated.
 No manual copying or merging of baseline files is needed.
 
+## Custom update steps
+
+`nixConfig.update.steps` is a custom Home Manager option supplied by this
+baseline. Private modules add Zsh snippets using Home Manager's ordering helpers.
+`dr update` updates flake inputs, runs these steps as the user, copies generated
+snapshots into the checkout, then builds and activates `#update`.
+
+`dr build` and `dr switch` only use saved snapshots. `nix flake update` alone
+only updates dependency pins. No custom runner runs unless steps are configured.
+
+### Example
+
+```nix
+{ lib, ... }:
+
+{
+  nixConfig.update.steps = {
+    prepare = lib.hm.dag.entryAnywhere ''
+      mkdir -p "$UPDATE_DIR/files/example"
+    '';
+
+    generateExample = lib.hm.dag.entryAfter [ "prepare" ] ''
+      # Replace this demonstration with the generator's output-file command.
+      print -r -- 'enabled = true' > "$UPDATE_DIR/files/example/config"
+      update_header "$UPDATE_DIR/files/example/config" 'Example CLI'
+    '';
+  };
+}
+```
+
+Each integration can keep its update step and static `home.file` declaration in
+one module. Put shared CLI update/login steps in the parent module and order
+configuration steps after login. Missing dependencies and cycles are errors;
+unrelated steps run sequentially without a guaranteed relative order.
+
+### Runner interface
+
+- `$CONFIG_DIR` is `local.configDirectory` and the working directory.
+- `$UPDATE_DIR` is temporary staging, cleaned up on success or failure. Write
+  regular files under `$UPDATE_DIR/files/`; they are copied to the corresponding
+  paths in `$CONFIG_DIR/files/` after every step succeeds.
+- `update_header FILE GENERATOR` prepends these comments to fresh output:
+
+  ```text
+  # This file is generated automatically by Example CLI in /path/to/private-checkout.
+  # Do not edit manually. Change the generating module and run dr update.
+  ```
+
+JSON cannot contain comments: generate an adjacent README instead. Use the
+external tool's output-path option or supported environment variable to write
+into staging, not the managed home file. Start cumulative generators with an
+empty staged configuration so removed entries do not linger.
+
+Steps share a Zsh process with startup files disabled, error/pipeline-failure
+propagation, and coreutils on PATH. Use absolute paths or an explicit PATH for
+other tools. These are ordinary shell snippets: there is no activation `run`
+helper. Do not change `CONFIG_DIR`, `UPDATE_DIR`, or the runner's error handling,
+and do not call `exit` from a step.
+
+### First setup and maintenance
+
+Commit initial credential-free snapshots before enabling their file declarations.
+A fresh laptop can clone, create `local.nix`, install external CLIs, and use
+explicit `darwin-rebuild` commands for the first build/switch. Manage small
+credential-helper scripts as executable `home.file` entries. Tokens and private
+keys must remain outside snapshots, since managed sources enter the Nix store.
+
+After changing update steps, run `dr switch` and open a new shell. The next
+`dr update` uses the newly installed runner; updating the baseline pin does not
+replace the runner already loaded by the current shell. Linux Home Manager
+consumers can evaluate the option, but no Linux update command is provided.
+
+Failed generation leaves saved snapshots untouched and prevents build/activation.
+Flake-lock changes and external CLI/login effects are not rolled back. Copying
+successful outputs is not transactional; unrelated or absent files are retained.
+A later build failure leaves the generated snapshots available for inspection.
+Review `git status` and `git diff -- files flake.lock` (including untracked files)
+and commit the snapshots and lock file yourself.
+
 ## Validate builder changes
 
 From the public checkout, evaluate the harmless fixtures:
@@ -92,3 +171,12 @@ nix eval --impure --json --expr \
 This checks Darwin and Linux module composition, package inheritance, scoped
 unfree permissions, scalar conflicts and overrides, Homebrew update flags, and
 rebuild targets. Fixtures are evaluated only; never activate them.
+
+Run update-runner regression tests on macOS with:
+
+```sh
+python3 tests/update.py
+```
+
+They build harmless runners in temporary directories and stub Nix/sudo commands
+when testing `dr`; they never update real inputs or activate a system.

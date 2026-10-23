@@ -26,6 +26,14 @@ let
   darwinArgs = common // { darwinModules = [ workDarwin ]; };
   current = baseline.lib.mkDarwin darwinArgs;
   update = baseline.lib.mkDarwin (darwinArgs // { upgradeHomebrew = true; });
+  withUpdateHook = baseline.lib.mkDarwin (darwinArgs // {
+    homeModules = [
+      workHome
+      ({ lib, ... }: {
+        nixConfig.update.steps.fixture = lib.hm.dag.entryAnywhere "true";
+      })
+    ];
+  });
   linux = baseline.lib.mkHome (common // {
     local = local // {
       system = "x86_64-linux";
@@ -79,19 +87,25 @@ let
       defaultHome.pkgs.config.allowUnfreePredicate { name = "obsidian-1"; }
       && !(defaultHome.pkgs.config.allowUnfreePredicate { name = "fixture-unfree-1"; });
     darwinRebuildTarget =
-      lib.hasInfix "'path:/Users/fixture/private-config'"
+      lib.hasInfix "path:/Users/fixture/private-config"
         current.config.home-manager.users.fixture.programs.zsh.initContent
       && !(current.config.home-manager.users.fixture.programs.zsh.shellAliases ? hm);
     linuxRebuildTarget =
       linux.config.programs.zsh.shellAliases.hm
       == "home-manager --flake 'path:/home/fixture/private-config#fixture'";
     defaultConfigDirectory =
-      lib.hasInfix "'path:/Users/fixture/.config/nix-config'"
+      lib.hasInfix "path:/Users/fixture/.config/nix-config"
         defaultHome.config.programs.zsh.initContent;
     scalarConflictRejected =
       !(builtins.tryEval scalarConflict.config.home.sessionVariables.WORK_FIXTURE).success;
     scalarOverrideAccepted =
       scalarOverride.config.home.sessionVariables.WORK_FIXTURE == "override";
+    noDefaultUpdateRunner = home.config.nixConfig.update.runner == null;
+    darwinUpdateRunnerWired =
+      let hm = withUpdateHook.config.home-manager.users.fixture;
+      in lib.hasInfix
+        (builtins.unsafeDiscardStringContext "${hm.nixConfig.update.runner}/bin/nix-config-update")
+        hm.programs.zsh.initContent;
   };
 in
 assert lib.assertMsg (lib.all (value: value) (builtins.attrValues results))
